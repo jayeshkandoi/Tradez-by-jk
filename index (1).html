@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tradez by Jaggu</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f1f4f8;--card:#fff;--ink:#0f1b2d;--mut:#6b778a;--line:#e1e6ee;--up:#0a8f5b;--dn:#d6334a;--acc:#1f4fd8;--accbg:#e8eefc;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0b111d;--card:#141c2c;--ink:#e8edf5;--mut:#8b97ab;--line:#222d42;--up:#2fcf8e;--dn:#ff6b7f;--acc:#6f95ff;--accbg:#1b2744}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0b111d;--card:#141c2c;--ink:#e8edf5;--mut:#8b97ab;--line:#222d42;--up:#2fcf8e;--dn:#ff6b7f;--acc:#6f95ff;--accbg:#1b2744}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 "Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums;padding-bottom:76px}
+.wrap{max-width:760px;margin:0 auto;padding:0 14px}
+header{padding:14px 0 8px}.brand{font-size:22px;font-weight:700;margin-bottom:10px;letter-spacing:-.02em}.brand span{font-size:13px;font-weight:500;color:var(--mut);letter-spacing:0}
+.idx{display:flex;gap:8px;overflow-x:auto}
+.ix{flex:1 0 auto;min-width:112px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.ix b{display:block;font-size:12px;color:var(--mut);font-weight:500}
+.ix span{font-weight:600;font-size:16px}.ix small{margin-left:6px;font-size:12px}
+.status{display:flex;justify-content:space-between;align-items:center;margin:10px 0 4px;font-size:13px;color:var(--mut)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--dn)}
+.dot.on{background:var(--up)}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--line);gap:10px}
+.row:last-child{border-bottom:0}
+.row .l{min-width:0}.row .l b{display:block;font-weight:600}.row .l small{color:var(--mut);font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .r{text-align:right;white-space:nowrap}.row .r small{display:block;font-size:12px}
+.tap{cursor:pointer}.tap:hover{background:var(--accbg)}
+input,select,button{font:inherit;color:inherit}
+input[type=search],input[type=number],select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.btn{border:0;border-radius:8px;padding:9px 14px;font-weight:600;cursor:pointer;background:var(--accbg);color:var(--acc)}
+.btn.buy{background:var(--acc);color:#fff}.btn.sell{background:var(--dn);color:#fff}.btn.sm{padding:5px 10px;font-size:13px}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav div{display:flex;max-width:760px;width:100%}
+nav button{flex:1;background:none;border:0;padding:14px 4px;color:var(--mut);font-weight:600;cursor:pointer;font-size:13px}
+nav button.on{color:var(--acc);box-shadow:inset 0 2px 0 var(--acc)}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.sum .card{padding:10px 12px}.sum b{display:block;color:var(--mut);font-size:12px;font-weight:500}.sum span{font-size:18px;font-weight:600}
+h2{font-size:16px;margin:14px 0 8px}
+.empty{padding:28px 16px;text-align:center;color:var(--mut)}
+.pill{font-size:11px;padding:2px 7px;border-radius:99px;background:var(--accbg);color:var(--acc);font-weight:600;margin-left:6px}
+#modal{position:fixed;inset:0;background:rgba(5,10,20,.55);display:none;align-items:flex-end;justify-content:center;z-index:10}
+#modal.show{display:flex}
+.sheet{background:var(--card);width:100%;max-width:520px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));max-height:92vh;overflow:auto}
+.seg{display:flex;gap:6px;margin:10px 0}.seg button{flex:1;padding:10px;border:1px solid var(--line);border-radius:8px;background:none;font-weight:600;cursor:pointer}
+.seg button.b{background:var(--acc);color:#fff;border-color:var(--acc)}.seg button.s{background:var(--dn);color:#fff;border-color:var(--dn)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+label{font-size:12px;color:var(--mut);display:block;margin:8px 0 3px}
+.est{font-size:13px;color:var(--mut);margin:10px 0;line-height:1.7}
+.err{color:var(--dn);font-size:13px;min-height:18px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;display:none;z-index:20;max-width:90%}
+.note{font-size:12px;color:var(--mut);margin:14px 2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="brand"><b>Tradez</b> <span>by Jaggu</span></div>
+<div class="idx" id="idx"></div>
+<div class="status"><span id="mkt"></span><span id="clock"></span></div>
+</header>
+<main id="main"></main>
+<p class="note">Starting prices are the NSE closing levels of 16 Oct 2026. After that, prices move as a simulation, not a live NSE feed. Market hours follow IST (Mon–Fri, 9:15–15:30); exchange holidays aren’t tracked.</p>
+</div>
+<nav><div id="tabs"></div></nav>
+<div id="modal"><div class="sheet" id="sheet"></div></div>
+<div id="toast"></div>
+<script>
+const LIVE_URL=""; // optional: URL returning JSON like {"RELIANCE":1211.2,"TCS":2465}
+const STK=[["RELIANCE","Reliance Industries",1211.2],["TCS","Tata Consultancy Services",2465],["HDFCBANK","HDFC Bank",728.85],["INFY","Infosys",1161.2],["ICICIBANK","ICICI Bank",1397],["SBIN","State Bank of India",962.6],["BHARTIARTL","Bharti Airtel",1905],["ITC","ITC",263.5],["LT","Larsen & Toubro",3627.1],["HINDUNILVR","Hindustan Unilever",1893.8],["KOTAKBANK","Kotak Mahindra Bank",447.4],["AXISBANK","Axis Bank",1290],["BAJFINANCE","Bajaj Finance",982.1],["M&M","Mahindra & Mahindra",2920.9],["SUNPHARMA","Sun Pharma",1758.8],["TMPV","Tata Motors Passenger Vehicles",286.85],["TATASTEEL","Tata Steel",175.5],["JSWSTEEL","JSW Steel",1216.3],["ASIANPAINT","Asian Paints",2331.9],["TECHM","Tech Mahindra",1790],["ONGC","ONGC",222],["TITAN","Titan Company",4444.8],["EICHERMOT","Eicher Motors",7284.5],["BEL","Bharat Electronics",376.85],["HINDALCO","Hindalco Industries",908],["CIPLA","Cipla",1325.1]];
+const BANKS=["HDFCBANK","ICICIBANK","SBIN","KOTAKBANK","AXISBANK"];
+const LEV=5,CAP=1000000;
+const fresh=()=>({cash:CAP,pos:{},orders:[],realized:0,charges:0,nid:1,practice:false});
+let st;try{st=JSON.parse(localStorage.getItem("tradez_jaggu")||"null")}catch(e){}
+st=st||fresh();
+const save=()=>{try{localStorage.setItem("tradez_jaggu",JSON.stringify(st))}catch(e){}};
+const rn=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+const px={};STK.forEach(([s,n,p])=>{const o=Math.round(p*(1+rn()*0.004)/0.05)*0.05;px[s]={n,prev:p,open:o,ltp:o,hi:o,lo:o}});
+const inr=(n,d=2)=>(n<0?"-":"")+"₹"+Math.abs(n).toLocaleString("en-IN",{minimumFractionDigits:d,maximumFractionDigits:d});
+const pc=(a,b)=>((a-b)/b*100);
+const cl=n=>n>=0?"up":"dn";
+const sg=n=>(n>=0?"+":"")+n.toFixed(2);
+function ist(){const o={};new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kolkata",weekday:"short",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).formatToParts(new Date()).forEach(x=>o[x.type]=x.value);return{d:o.weekday,m:(+o.hour%24)*60+ +o.minute,t:`${o.hour}:${o.minute}:${o.second}`}}
+const isOpen=()=>{const t=ist();return t.d!=="Sat"&&t.d!=="Sun"&&t.m>=555&&t.m<930};
+const canTrade=()=>isOpen()||st.practice;
+function charges(side,prod,v){const b=prod==="MIS"?Math.min(20,v*0.0003):0,stt=prod==="CNC"?v*0.001:(side==="SELL"?v*0.00025:0),ex=v*0.0000297,se=v*0.000001,g=0.18*(b+ex+se),sp=side==="BUY"?v*(prod==="CNC"?0.00015:0.00003):0;return b+stt+ex+se+g+sp}
+const mis=()=>Object.values(st.pos).filter(p=>p.prod==="MIS"&&p.qty);
+const cnc=()=>Object.values(st.pos).filter(p=>p.prod==="CNC"&&p.qty);
+const unreal=p=>(px[p.sym].ltp-p.avg)*p.qty;
+const marginUsed=()=>mis().reduce((a,p)=>a+p.margin,0);
+const avail=()=>st.cash-marginUsed();
+const equity=()=>st.cash+mis().reduce((a,p)=>a+unreal(p),0)+cnc().reduce((a,p)=>a+p.qty*px[p.sym].ltp,0);
+
+function trade(sym,side,qty,prod,price){
+  const key=sym+"|"+prod,p=st.pos[key]||{sym,prod,qty:0,avg:0,margin:0},val=price*qty,chg=charges(side,prod,val),sgn=side==="BUY"?1:-1;
+  if(prod==="CNC"){
+    if(side==="BUY"&&val+chg>avail())return"Not enough funds. You need "+inr(val+chg)+" and have "+inr(avail())+".";
+    if(side==="SELL"&&qty>p.qty)return"You hold only "+p.qty+" shares of "+sym+" for delivery.";
+  }else{
+    const same=p.qty===0||Math.sign(p.qty)===sgn,add=same?qty:Math.max(0,qty-Math.abs(p.qty));
+    if(add*price/LEV+chg>avail()+(same?0:p.margin))return"Not enough margin. Intraday needs about "+inr(add*price/LEV)+" blocked.";
+  }
+  if(p.qty===0||Math.sign(p.qty)===sgn){p.avg=(p.avg*Math.abs(p.qty)+val)/(Math.abs(p.qty)+qty);p.qty+=sgn*qty;if(prod==="MIS")p.margin+=val/LEV}
+  else{
+    const c=Math.min(qty,Math.abs(p.qty)),r=(price-p.avg)*c*Math.sign(p.qty);
+    st.realized+=r;if(prod==="MIS"){st.cash+=r;p.margin-=p.margin*c/Math.abs(p.qty)}
+    p.qty+=sgn*c;const rem=qty-c;
+    if(p.qty===0){p.avg=0;p.margin=0}
+    if(rem>0){p.qty=sgn*rem;p.avg=price;p.margin=val/LEV*rem/qty}
+  }
+  if(prod==="CNC")st.cash+=-sgn*val;
+  st.cash-=chg;st.charges+=chg;
+  if(p.qty)st.pos[key]=p;else delete st.pos[key];
+  return null;
+}
+function addOrder(o){o.id=st.nid++;o.time=ist().t;st.orders.unshift(o);if(st.orders.length>80)st.orders.pop();return o}
+function place(sym,side,qty,prod,type,lim){
+  if(!canTrade())return"The market is closed. Turn on practice mode in Funds to trade now.";
+  if(!(qty>0)||qty%1)return"Enter a whole number of shares.";
+  const ltp=px[sym].ltp;
+  if(type==="MARKET"){const e=trade(sym,side,qty,prod,ltp);const o=addOrder({sym,side,qty,prod,type,price:ltp,status:e?"REJECTED":"EXECUTED",msg:e||""});if(!e)save();return e}
+  if(!(lim>0))return"Enter a limit price.";
+  addOrder({sym,side,qty,prod,type,price:lim,status:"OPEN"});save();return null;
+}
+function checkOrders(){
+  st.orders.filter(o=>o.status==="OPEN").forEach(o=>{const l=px[o.sym].ltp;
+    if((o.side==="BUY"&&l<=o.price)||(o.side==="SELL"&&l>=o.price)){const e=trade(o.sym,o.side,o.qty,o.prod,o.price);o.status=e?"REJECTED":"EXECUTED";o.msg=e||"";toast(o.sym+" limit order "+o.status.toLowerCase())}});
+}
+function tick(){
+  if(!canTrade())return;
+  const mk=rn()*0.0003;
+  if(!LIVE_URL)for(const k in px){const q=px[k];let n=Math.round(q.ltp*(1+mk+rn()*0.0005)/0.05)*0.05;if(n<1)n=1;q.ltp=n;q.hi=Math.max(q.hi,n);q.lo=Math.min(q.lo,n)}
+  if(isOpen()&&ist().m>=920&&mis().length){mis().forEach(p=>{const s=p.qty>0?"SELL":"BUY",l=px[p.sym].ltp,q=Math.abs(p.qty);trade(p.sym,s,q,"MIS",l);addOrder({sym:p.sym,side:s,qty:q,prod:"MIS",type:"MARKET",price:l,status:"EXECUTED",msg:"Auto square-off"})});toast("Intraday positions squared off at 15:20");save()}
+  checkOrders();save();
+}
+function idxVal(base,list){const a=list.reduce((s,k)=>s+pc(px[k].ltp,px[k].prev),0)/list.length;return{v:base*(1+a/100),c:a}}
+function renderTop(){
+  const all=STK.map(s=>s[0]),I=[["NIFTY 50",23146.15,all],["BANK NIFTY",55844,BANKS],["SENSEX",74729.27,all]];
+  document.getElementById("idx").innerHTML=I.map(([n,b,l])=>{const r=idxVal(b,l);return`<div class="ix"><b>${n}</b><span>${r.v.toLocaleString("en-IN",{maximumFractionDigits:2})}</span><small class="${cl(r.c)}">${sg(r.c)}%</small></div>`}).join("");
+  const o=isOpen();
+  document.getElementById("mkt").innerHTML=`<span class="dot ${o||st.practice?"on":""}"></span>${o?"Market open":st.practice?"Practice mode (market closed)":"Market closed"}`;
+  document.getElementById("clock").textContent="IST "+ist().t;
+}
+let tab="watch",q="";
+const TABS=[["watch","Watchlist"],["pos","Positions"],["hold","Holdings"],["ord","Orders"],["fund","Funds"]];
+function renderTabs(){document.getElementById("tabs").innerHTML=TABS.map(([k,n])=>`<button class="${tab===k?"on":""}" onclick="go('${k}')">${n}</button>`).join("")}
+function go(k){tab=k;renderTabs();render()}
+function pnlRow(p,exit){const l=px[p.sym].ltp,u=unreal(p),cost=Math.abs(p.avg*p.qty);
+  return`<div class="row"><div class="l"><b>${p.sym}<span class="pill">${p.prod}</span></b><small>${p.qty>0?"":"Short "}${Math.abs(p.qty)} @ ${inr(p.avg)} · LTP ${inr(l)}</small></div><div class="r"><b class="${cl(u)}">${inr(u)}</b><small class="${cl(u)}">${sg(u/cost*100)}%</small></div>${exit?`<button class="btn sm" onclick="openT('${p.sym}','${p.qty>0?"SELL":"BUY"}','${p.prod}',${Math.abs(p.qty)})">Exit</button>`:`<button class="btn sm" onclick="openT('${p.sym}','SELL','CNC',${p.qty})">Sell</button>`}</div>`}
+function summary(){const e=equity(),t=e-CAP;return`<div class="sum"><div class="card"><b>Portfolio value</b><span>${inr(e)}</span></div><div class="card"><b>Total P&amp;L</b><span class="${cl(t)}">${inr(t)}</span></div></div>`}
+function render(){
+  const m=document.getElementById("main");let h="";
+  if(tab==="watch"){
+    const f=STK.filter(([s,n])=>(s+n).toLowerCase().includes(q.toLowerCase()));
+    h=summary()+`<input type="search" id="q" placeholder="Search stocks" value="${q}" oninput="q=this.value;render();document.getElementById('q').focus()" style="margin-bottom:10px"><div class="card">`+(f.length?f.map(([s,n])=>{const x=px[s],c=pc(x.ltp,x.prev);return`<div class="row tap" onclick="openT('${s}','BUY')"><div class="l"><b>${s}</b><small>${n}</small></div><div class="r"><b class="${cl(c)}">${inr(x.ltp)}</b><small class="${cl(c)}">${sg(x.ltp-x.prev)} (${sg(c)}%)</small></div></div>`}).join(""):`<div class="empty">No stock matches “${q}”.</div>`)+"</div>";
+  }else if(tab==="pos"){
+    const l=mis(),t=l.reduce((a,p)=>a+unreal(p),0);
+    h=`<h2>Intraday positions ${l.length?`<span class="${cl(t)}">${inr(t)}</span>`:""}</h2><div class="card">`+(l.length?l.map(p=>pnlRow(p,true)).join(""):`<div class="empty">No open positions. Pick a stock in Watchlist and place an intraday order.</div>`)+"</div>";
+  }else if(tab==="hold"){
+    const l=cnc(),t=l.reduce((a,p)=>a+unreal(p),0),v=l.reduce((a,p)=>a+p.qty*px[p.sym].ltp,0);
+    h=`<h2>Holdings · ${inr(v)} <span class="${cl(t)}">${inr(t)}</span></h2><div class="card">`+(l.length?l.map(p=>pnlRow(p,false)).join(""):`<div class="empty">No delivery holdings yet. Buy with the Delivery product to hold overnight.</div>`)+"</div>";
+  }else if(tab==="ord"){
+    h=`<h2>Orders</h2><div class="card">`+(st.orders.length?st.orders.map(o=>`<div class="row"><div class="l"><b class="${o.side==="BUY"?"up":"dn"}">${o.side} ${o.sym}</b><small>${o.time} · ${o.qty} @ ${inr(o.price)} · ${o.prod} ${o.type}${o.msg?" · "+o.msg:""}</small></div><div class="r"><b>${o.status}</b></div>${o.status==="OPEN"?`<button class="btn sm ghost" onclick="cancelO(${o.id})">Cancel</button>`:""}</div>`).join(""):`<div class="empty">No orders yet.</div>`)+"</div>";
+  }else{
+    const e=equity();
+    h=`<h2>Funds</h2><div class="sum"><div class="card"><b>Available to trade</b><span>${inr(avail())}</span></div><div class="card"><b>Margin blocked</b><span>${inr(marginUsed())}</span></div><div class="card"><b>Realised P&amp;L</b><span class="${cl(st.realized)}">${inr(st.realized)}</span></div><div class="card"><b>Charges paid</b><span>${inr(st.charges)}</span></div></div>
+    <div class="card"><div class="row"><div class="l"><b>Practice mode</b><small>Run prices and accept orders even when the market is closed</small></div><button class="btn sm ${st.practice?"buy":""}" onclick="st.practice=!st.practice;save();render();renderTop()">${st.practice?"On":"Off"}</button></div>
+    <div class="row"><div class="l"><b>Starting capital</b><small>${inr(CAP,0)} virtual · intraday leverage ${LEV}x</small></div><button class="btn sm ghost" onclick="if(confirm('Reset to ${inr(CAP,0)} and clear all trades?')){st=fresh();save();render();renderTop()}">Reset</button></div></div>
+    <p class="note">Charges are approximate: brokerage (₹20 or 0.03% for intraday, free for delivery), STT, exchange fees, SEBI fees, GST and stamp duty.</p>`;
+  }
+  const a=document.activeElement,keep=a&&a.id==="q";
+  if(tab==="watch"&&keep&&document.getElementById("q")){ // update rows only, keep the search box focused
+    const box=m.querySelector(".card:last-child");const tmp=document.createElement("div");tmp.innerHTML=h;box.innerHTML=tmp.querySelector(".card:last-child").innerHTML;m.querySelector(".sum").innerHTML=tmp.querySelector(".sum").innerHTML;return}
+  m.innerHTML=h;
+}
+function cancelO(id){const o=st.orders.find(x=>x.id===id);if(o){o.status="CANCELLED";save();render()}}
+let T={};
+function openT(sym,side,prod,qty){T={sym,side,prod:prod||"MIS",type:"MARKET",qty:qty||1};drawT();document.getElementById("modal").classList.add("show")}
+function closeT(){document.getElementById("modal").classList.remove("show")}
+document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeT()});
+function drawT(){
+  const x=px[T.sym],c=pc(x.ltp,x.prev);
+  document.getElementById("sheet").innerHTML=`<div class="row" style="padding:0 0 8px;border:0"><div class="l"><b style="font-size:18px">${T.sym}</b><small>${x.n} · NSE</small></div><div class="r"><b class="${cl(c)}" id="tl">${inr(x.ltp)}</b><small class="${cl(c)}">${sg(c)}%</small></div></div>
+  <div class="seg"><button class="${T.side==="BUY"?"b":""}" onclick="T.side='BUY';drawT()">Buy</button><button class="${T.side==="SELL"?"s":""}" onclick="T.side='SELL';drawT()">Sell</button></div>
+  <div class="g2"><div><label>Product</label><select onchange="T.prod=this.value;drawT()"><option value="MIS" ${T.prod==="MIS"?"selected":""}>Intraday (MIS)</option><option value="CNC" ${T.prod==="CNC"?"selected":""}>Delivery (CNC)</option></select></div>
+  <div><label>Order type</label><select onchange="T.type=this.value;drawT()"><option value="MARKET" ${T.type==="MARKET"?"selected":""}>Market</option><option value="LIMIT" ${T.type==="LIMIT"?"selected":""}>Limit</option></select></div>
+  <div><label>Quantity</label><input type="number" min="1" id="tq" value="${T.qty}" oninput="T.qty=+this.value;est()"></div>
+  <div><label>${T.type==="LIMIT"?"Limit price":"Price"}</label><input type="number" step="0.05" id="tp" ${T.type==="MARKET"?"disabled value=\"\" placeholder=\"At market\"":`value="${T.lim||x.ltp.toFixed(2)}"`} oninput="T.lim=+this.value;est()"></div></div>
+  <div class="est" id="te"></div><div class="err" id="terr"></div>
+  <div class="g2"><button class="btn ghost" onclick="closeT()">Cancel</button><button class="btn ${T.side==="BUY"?"buy":"sell"}" onclick="submitT()">${T.side==="BUY"?"Buy":"Sell"} ${T.sym}</button></div>`;
+  est();
+}
+function est(){
+  const el=document.getElementById("te");if(!el)return;
+  const p=T.type==="LIMIT"?(T.lim||px[T.sym].ltp):px[T.sym].ltp,v=p*(T.qty||0);
+  el.innerHTML=`Order value ${inr(v)}<br>${T.prod==="MIS"?"Margin needed ≈ "+inr(v/LEV):"Funds needed ≈ "+inr(T.side==="BUY"?v:0)}<br>Est. charges ${inr(charges(T.side,T.prod,v))}<br>Available ${inr(avail())}`;
+}
+function submitT(){
+  const e=place(T.sym,T.side,T.qty,T.prod,T.type,T.lim||(+document.getElementById("tp").value));
+  if(e){document.getElementById("terr").textContent=e;return}
+  closeT();toast(T.type==="MARKET"?"Order executed":"Limit order placed");render();
+}
+let tt;function toast(m){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";clearTimeout(tt);tt=setTimeout(()=>t.style.display="none",2600)}
+async function pull(){if(!LIVE_URL)return;try{const d=await(await fetch(LIVE_URL)).json();for(const k in d){const x=px[k];if(x&&+d[k]>0){x.ltp=+d[k];x.hi=Math.max(x.hi,x.ltp);x.lo=Math.min(x.lo,x.ltp)}}}catch(e){}}
+setInterval(pull,5000);pull();
+renderTabs();render();renderTop();
+setInterval(()=>{tick();renderTop();if(!document.getElementById("modal").classList.contains("show")||true){if(document.activeElement.tagName!=="SELECT")render()}
+  const tl=document.getElementById("tl");if(tl&&T.sym){tl.textContent=inr(px[T.sym].ltp);if(T.type==="MARKET")est()}},1000);
+</script>
+</body>
+</html>

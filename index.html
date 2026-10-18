@@ -37,7 +37,7 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid 
 .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
 nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
 nav div{display:flex;max-width:760px;width:100%}
-nav button{flex:1;background:none;border:0;padding:14px 4px;color:var(--mut);font-weight:600;cursor:pointer;font-size:13px}
+nav button{flex:1;background:none;border:0;padding:14px 2px;color:var(--mut);font-weight:600;cursor:pointer;font-size:13px}
 nav button.on{color:var(--acc);box-shadow:inset 0 2px 0 var(--acc)}
 .sum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .sum .card{padding:10px 12px}.sum b{display:block;color:var(--mut);font-size:12px;font-weight:500}.sum span{font-size:18px;font-weight:600}
@@ -54,6 +54,7 @@ label{font-size:12px;color:var(--mut);display:block;margin:8px 0 3px}
 .est{font-size:13px;color:var(--mut);margin:10px 0;line-height:1.7}
 .err{color:var(--dn);font-size:13px;min-height:18px}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;display:none;z-index:20;max-width:90%}
+.chain{display:grid;grid-template-columns:1fr 78px 1fr;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid var(--line)}.chain b{text-align:center}.chain.atm{background:var(--accbg)}.chain .btn{background:transparent;border:1px solid var(--line);color:inherit;font-weight:500;padding:7px}.chain.hd{font-size:11px;color:var(--mut);text-align:center;font-weight:600;padding:8px 10px}.chips{display:flex;gap:6px;overflow-x:auto;margin:10px 0}.chips .btn{flex:0 0 auto}
 .note{font-size:12px;color:var(--mut);margin:14px 2px}
 </style>
 </head>
@@ -92,9 +93,9 @@ function charges(side,prod,v){const b=prod==="MIS"?Math.min(20,v*0.0003):0,stt=p
 const mis=()=>Object.values(st.pos).filter(p=>p.prod==="MIS"&&p.qty);
 const cnc=()=>Object.values(st.pos).filter(p=>p.prod==="CNC"&&p.qty);
 const unreal=p=>(px[p.sym].ltp-p.avg)*p.qty;
-const marginUsed=()=>mis().reduce((a,p)=>a+p.margin,0);
+const marginUsed=()=>mis().reduce((a,p)=>a+p.margin,0)+foP().reduce((a,p)=>a+p.margin,0);
 const avail=()=>st.cash-marginUsed();
-const equity=()=>st.cash+mis().reduce((a,p)=>a+unreal(p),0)+cnc().reduce((a,p)=>a+p.qty*px[p.sym].ltp,0);
+const equity=()=>st.cash+mis().reduce((a,p)=>a+unreal(p),0)+cnc().reduce((a,p)=>a+p.qty*px[p.sym].ltp,0)+foP().reduce((a,p)=>a+(ip(p.inst)-p.avg)*p.qty,0);
 
 function trade(sym,side,qty,prod,price){
   const key=sym+"|"+prod,p=st.pos[key]||{sym,prod,qty:0,avg:0,margin:0},val=price*qty,chg=charges(side,prod,val),sgn=side==="BUY"?1:-1;
@@ -118,6 +119,80 @@ function trade(sym,side,qty,prod,price){
   if(p.qty)st.pos[key]=p;else delete st.pos[key];
   return null;
 }
+// ---------- F&O ----------
+const ALLS=STK.map(s=>s[0]);
+// Lot sizes and expiry rules change often: check NSE circulars and edit here.
+const FU={NIFTY:{base:23146.15,list:ALLS,lot:65,step:50,iv:.14,wk:true},BANKNIFTY:{base:55844,list:BANKS,lot:30,step:100,iv:.155,wk:false}};
+const MON=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+const r05=x=>Math.round(x/0.05)*0.05;
+const NC=x=>{const t=1/(1+0.2316419*Math.abs(x)),p=0.3989423*Math.exp(-x*x/2)*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return x>0?1-p:p};
+function bs(S,K,T,cp,iv){const r=0.065;if(T<=0)return Math.max(0,cp==="CE"?S-K:K-S);const sd=iv*Math.sqrt(T),d1=(Math.log(S/K)+(r+iv*iv/2)*T)/sd,d2=d1-sd;return cp==="CE"?S*NC(d1)-K*Math.exp(-r*T)*NC(d2):K*Math.exp(-r*T)*NC(-d2)-S*NC(-d1)}
+const spot=u=>idxVal(FU[u].base,FU[u].list).v;
+const tYrs=e=>Math.max(0,(e-Date.now())/31536e6);
+function ip(i,S){S=S||spot(i.u);const T=tYrs(i.e);if(i.k==="FUT")return r05(S*Math.exp(0.065*T));const iv=FU[i.u].iv+Math.abs(Math.log(i.s/S))*1.2;return Math.max(0.05,r05(bs(S,i.s,T,i.k,iv)))}
+const fmtE=e=>{const d=new Date(e);return String(d.getUTCDate()).padStart(2,"0")+MON[d.getUTCMonth()]+String(d.getUTCFullYear()).slice(2)};
+const lab=i=>i.u+" "+fmtE(i.e)+(i.k==="FUT"?" FUT":" "+i.s+" "+i.k);
+const idOf=i=>[i.u,i.k,i.e,i.s||0].join("|");
+const lastTue=(y,m)=>{let d=Date.UTC(y,m+1,0,10);while(new Date(d).getUTCDay()!==2)d-=864e5;return d};
+function expsOf(u,wk){const n=new Date(Date.now()+19800000),out=[];
+  if(wk&&FU[u].wk){let d=Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate(),10);while(out.length<3){if(new Date(d).getUTCDay()===2&&d>Date.now())out.push(d);d+=864e5}}
+  else{let y=n.getUTCFullYear(),m=n.getUTCMonth();while(out.length<2){const d=lastTue(y,m);if(d>Date.now())out.push(d);if(++m>11){m=0;y++}}}
+  return out}
+const foP=()=>Object.values(st.pos).filter(p=>p.prod==="FO"&&p.qty);
+function fch(k,side,v){const b=20,f=k==="FUT",stt=side==="SELL"?v*(f?0.0002:0.001):0,ex=v*(f?0.0000173:0.0003503),se=v*0.000001,g=0.18*(b+ex+se),sp=side==="BUY"?v*(f?0.00002:0.00003):0;return b+stt+ex+se+g+sp}
+function tradeFO(i,side,qty,price,free){
+  const id=idOf(i),key=id+"|FO",p=st.pos[key]||{sym:id,prod:"FO",inst:i,qty:0,avg:0,margin:0},sgn=side==="BUY"?1:-1,val=price*qty,chg=free?0:fch(i.k,side,val),S=spot(i.u),mpu=i.k==="FUT"?price*0.12:(sgn>0?price:S*0.15);
+  const same=p.qty===0||Math.sign(p.qty)===sgn,add=same?qty:Math.max(0,qty-Math.abs(p.qty)),have=avail()+(same?0:p.margin);
+  if(!free&&add*mpu+chg>have)return"Not enough margin. This order needs about "+inr(add*mpu+chg)+" and you have "+inr(have)+".";
+  if(same){p.avg=(p.avg*Math.abs(p.qty)+val)/(Math.abs(p.qty)+qty);p.qty+=sgn*qty;p.margin+=qty*mpu}
+  else{const c=Math.min(qty,Math.abs(p.qty)),r=(price-p.avg)*c*Math.sign(p.qty);st.realized+=r;st.cash+=r;p.margin-=p.margin*c/Math.abs(p.qty);p.qty+=sgn*c;const rem=qty-c;if(p.qty===0){p.avg=0;p.margin=0}if(rem>0){p.qty=sgn*rem;p.avg=price;p.margin=rem*mpu}}
+  st.cash-=chg;st.charges+=chg;if(p.qty)st.pos[key]=p;else delete st.pos[key];return null}
+function settle(){foP().forEach(p=>{const i=p.inst;if(i.e>Date.now())return;const S=spot(i.u),v=i.k==="FUT"?S:Math.max(0,i.k==="CE"?S-i.s:i.s-S),s=p.qty>0?"SELL":"BUY",q=Math.abs(p.qty);tradeFO(i,s,q,v,true);addOrder({sym:lab(i),side:s,qty:q,prod:"F&O",type:"MARKET",price:v,status:"EXECUTED",msg:"Expiry settlement"});toast(lab(i)+" settled at expiry");save()})}
+let fo_={u:"NIFTY",t:"OPT",i:0};
+function foHtml(){
+  const u=fo_.u,F=FU[u],S=spot(u),r=idxVal(F.base,F.list),ex=fo_.t==="FUT"?expsOf(u,false):expsOf(u,true);
+  if(fo_.i>=ex.length)fo_.i=0;const e=ex[fo_.i];
+  let h=`<div class="seg">${Object.keys(FU).map(k=>`<button class="${u===k?"b":""}" onclick="fo_.u='${k}';fo_.i=0;render()">${k}</button>`).join("")}</div>
+  <div class="card"><div class="row"><div class="l"><b>${u}</b><small>Lot size ${F.lot} · strike step ${F.step}</small></div><div class="r"><b class="${cl(r.c)}">${S.toLocaleString("en-IN",{maximumFractionDigits:2})}</b><small class="${cl(r.c)}">${sg(r.c)}%</small></div></div></div>
+  <div class="seg"><button class="${fo_.t==="OPT"?"b":""}" onclick="fo_.t='OPT';fo_.i=0;render()">Options</button><button class="${fo_.t==="FUT"?"b":""}" onclick="fo_.t='FUT';fo_.i=0;render()">Futures</button></div>`;
+  if(fo_.t==="FUT"){
+    return h+`<div class="card">`+ex.map(d=>{const i={u,k:"FUT",e:d};return`<div class="row"><div class="l"><b>${lab(i)}</b><small>Margin ≈ 12% · 1 lot = ${inr(ip(i)*F.lot,0)}</small></div><div class="r"><b>${inr(ip(i))}</b></div><button class='btn sm buy' onclick='openF(${JSON.stringify(i)},"BUY")'>Buy</button><button class='btn sm sell' onclick='openF(${JSON.stringify(i)},"SELL")'>Sell</button></div>`}).join("")+"</div>";
+  }
+  h+=`<div class="chips">${ex.map((d,n)=>`<button class="btn sm ${n===fo_.i?"buy":""}" onclick="fo_.i=${n};render()">${fmtE(d)}</button>`).join("")}</div><div class="card"><div class="chain hd"><span>CALL</span><span>STRIKE</span><span>PUT</span></div>`;
+  const atm=Math.round(S/F.step)*F.step;
+  for(let k=-8;k<=8;k++){const K=atm+k*F.step,c={u,k:"CE",e,s:K},p={u,k:"PE",e,s:K};
+    h+=`<div class="chain ${k===0?"atm":""}"><button class="btn" onclick='openF(${JSON.stringify(c)},"BUY")'>${ip(c,S).toFixed(2)}</button><b>${K}</b><button class="btn" onclick='openF(${JSON.stringify(p)},"BUY")'>${ip(p,S).toFixed(2)}</button></div>`}
+  return h+"</div><p class='note'>Tap a premium to buy it, then choose Sell in the ticket to write the option. Premiums come from a Black-Scholes model on the simulated index, not live exchange quotes.</p>";
+}
+function foPosHtml(){
+  const l=foP(),t=l.reduce((a,p)=>a+(ip(p.inst)-p.avg)*p.qty,0);
+  return`<h2>F&amp;O positions ${l.length?`<span class="${cl(t)}">${inr(t)}</span>`:""}</h2><div class="card">`+(l.length?l.map(p=>{const i=p.inst,x=ip(i),u=(x-p.avg)*p.qty,lots=Math.abs(p.qty)/FU[i.u].lot;return`<div class="row"><div class="l"><b>${lab(i)}</b><small>${p.qty>0?"":"Short "}${lots} lot${lots>1?"s":""} (${Math.abs(p.qty)}) @ ${inr(p.avg)} · LTP ${inr(x)}</small></div><div class="r"><b class="${cl(u)}">${inr(u)}</b></div><button class='btn sm' onclick='openF(${JSON.stringify(i)},"${p.qty>0?"SELL":"BUY"}",${lots})'>Exit</button></div>`}).join(""):`<div class="empty">No F&amp;O positions. Open the F&amp;O tab to trade index futures and options.</div>`)+"</div>";
+}
+let TF={};
+function openF(inst,side,lots){TF={inst,side:side||"BUY",lots:lots||1};drawF();document.getElementById("modal").classList.add("show")}
+function drawF(){
+  const i=TF.inst,F=FU[i.u];
+  document.getElementById("sheet").innerHTML=`<div class="row" style="padding:0 0 8px;border:0"><div class="l"><b style="font-size:17px">${lab(i)}</b><small>NSE F&amp;O · lot ${F.lot}</small></div><div class="r"><b id="fl">${inr(ip(i))}</b></div></div>
+  <div class="seg"><button class="${TF.side==="BUY"?"b":""}" onclick="TF.side='BUY';drawF()">Buy</button><button class="${TF.side==="SELL"?"s":""}" onclick="TF.side='SELL';drawF()">Sell</button></div>
+  <label>Lots</label><input type="number" min="1" id="fq" value="${TF.lots}" oninput="TF.lots=+this.value;estF()">
+  <div class="est" id="fe"></div><div class="err" id="ferr"></div>
+  <div class="g2"><button class="btn ghost" onclick="closeT()">Cancel</button><button class="btn ${TF.side==="BUY"?"buy":"sell"}" onclick="submitF()">${TF.side==="BUY"?"Buy":"Sell"}</button></div>`;
+  estF();
+}
+function estF(){
+  const el=document.getElementById("fe");if(!el)return;
+  const i=TF.inst,F=FU[i.u],q=(TF.lots||0)*F.lot,p=ip(i),v=p*q,long=TF.side==="BUY",m=i.k==="FUT"?v*0.12:(long?v:spot(i.u)*q*0.15);
+  el.innerHTML=`Quantity ${q}<br>${i.k==="FUT"?"Contract value":"Premium"} ${inr(v)}<br>Margin needed ≈ ${inr(m)}<br>Est. charges ${inr(fch(i.k,TF.side,v))}<br>Available ${inr(avail())}${i.k!=="FUT"&&!long?"<br><span class='dn'>Writing options can lose far more than the premium received.</span>":""}`;
+}
+function submitF(){
+  const el=document.getElementById("ferr"),i=TF.inst,F=FU[i.u];
+  if(!canTrade()){el.textContent="The market is closed. Turn on practice mode in Funds to trade now.";return}
+  if(!(TF.lots>0)||TF.lots%1){el.textContent="Enter a whole number of lots.";return}
+  const q=TF.lots*F.lot,p=ip(i),e=tradeFO(i,TF.side,q,p);
+  addOrder({sym:lab(i),side:TF.side,qty:q,prod:"F&O",type:"MARKET",price:p,status:e?"REJECTED":"EXECUTED",msg:e||""});
+  if(e){el.textContent=e;return}
+  save();closeT();toast("Order executed");render();
+}
 function addOrder(o){o.id=st.nid++;o.time=ist().t;st.orders.unshift(o);if(st.orders.length>80)st.orders.pop();return o}
 function place(sym,side,qty,prod,type,lim){
   if(!canTrade())return"The market is closed. Turn on practice mode in Funds to trade now.";
@@ -132,6 +207,7 @@ function checkOrders(){
     if((o.side==="BUY"&&l<=o.price)||(o.side==="SELL"&&l>=o.price)){const e=trade(o.sym,o.side,o.qty,o.prod,o.price);o.status=e?"REJECTED":"EXECUTED";o.msg=e||"";toast(o.sym+" limit order "+o.status.toLowerCase())}});
 }
 function tick(){
+  settle();
   if(!canTrade())return;
   const mk=rn()*0.0003;
   if(!LIVE_URL)for(const k in px){const q=px[k];let n=Math.round(q.ltp*(1+mk+rn()*0.0005)/0.05)*0.05;if(n<1)n=1;q.ltp=n;q.hi=Math.max(q.hi,n);q.lo=Math.min(q.lo,n)}
@@ -147,7 +223,7 @@ function renderTop(){
   document.getElementById("clock").textContent="IST "+ist().t;
 }
 let tab="watch",q="";
-const TABS=[["watch","Watchlist"],["pos","Positions"],["hold","Holdings"],["ord","Orders"],["fund","Funds"]];
+const TABS=[["watch","Watchlist"],["fo","F&O"],["pos","Positions"],["hold","Holdings"],["ord","Orders"],["fund","Funds"]];
 function renderTabs(){document.getElementById("tabs").innerHTML=TABS.map(([k,n])=>`<button class="${tab===k?"on":""}" onclick="go('${k}')">${n}</button>`).join("")}
 function go(k){tab=k;renderTabs();render()}
 function pnlRow(p,exit){const l=px[p.sym].ltp,u=unreal(p),cost=Math.abs(p.avg*p.qty);
@@ -161,17 +237,18 @@ function render(){
   }else if(tab==="pos"){
     const l=mis(),t=l.reduce((a,p)=>a+unreal(p),0);
     h=`<h2>Intraday positions ${l.length?`<span class="${cl(t)}">${inr(t)}</span>`:""}</h2><div class="card">`+(l.length?l.map(p=>pnlRow(p,true)).join(""):`<div class="empty">No open positions. Pick a stock in Watchlist and place an intraday order.</div>`)+"</div>";
+  h+=foPosHtml();
   }else if(tab==="hold"){
     const l=cnc(),t=l.reduce((a,p)=>a+unreal(p),0),v=l.reduce((a,p)=>a+p.qty*px[p.sym].ltp,0);
     h=`<h2>Holdings · ${inr(v)} <span class="${cl(t)}">${inr(t)}</span></h2><div class="card">`+(l.length?l.map(p=>pnlRow(p,false)).join(""):`<div class="empty">No delivery holdings yet. Buy with the Delivery product to hold overnight.</div>`)+"</div>";
-  }else if(tab==="ord"){
+  }else if(tab==="fo"){h=foHtml();}else if(tab==="ord"){
     h=`<h2>Orders</h2><div class="card">`+(st.orders.length?st.orders.map(o=>`<div class="row"><div class="l"><b class="${o.side==="BUY"?"up":"dn"}">${o.side} ${o.sym}</b><small>${o.time} · ${o.qty} @ ${inr(o.price)} · ${o.prod} ${o.type}${o.msg?" · "+o.msg:""}</small></div><div class="r"><b>${o.status}</b></div>${o.status==="OPEN"?`<button class="btn sm ghost" onclick="cancelO(${o.id})">Cancel</button>`:""}</div>`).join(""):`<div class="empty">No orders yet.</div>`)+"</div>";
   }else{
     const e=equity();
     h=`<h2>Funds</h2><div class="sum"><div class="card"><b>Available to trade</b><span>${inr(avail())}</span></div><div class="card"><b>Margin blocked</b><span>${inr(marginUsed())}</span></div><div class="card"><b>Realised P&amp;L</b><span class="${cl(st.realized)}">${inr(st.realized)}</span></div><div class="card"><b>Charges paid</b><span>${inr(st.charges)}</span></div></div>
     <div class="card"><div class="row"><div class="l"><b>Practice mode</b><small>Run prices and accept orders even when the market is closed</small></div><button class="btn sm ${st.practice?"buy":""}" onclick="st.practice=!st.practice;save();render();renderTop()">${st.practice?"On":"Off"}</button></div>
     <div class="row"><div class="l"><b>Starting capital</b><small>${inr(CAP,0)} virtual · intraday leverage ${LEV}x</small></div><button class="btn sm ghost" onclick="if(confirm('Reset to ${inr(CAP,0)} and clear all trades?')){st=fresh();save();render();renderTop()}">Reset</button></div></div>
-    <p class="note">Charges are approximate: brokerage (₹20 or 0.03% for intraday, free for delivery), STT, exchange fees, SEBI fees, GST and stamp duty.</p>`;
+    <p class="note">Charges are approximate (F&O: ₹20 per order plus STT, exchange fees, GST, stamp duty). Equity brokerage (₹20 or 0.03% for intraday, free for delivery), STT, exchange fees, SEBI fees, GST and stamp duty.</p>`;
   }
   const a=document.activeElement,keep=a&&a.id==="q";
   if(tab==="watch"&&keep&&document.getElementById("q")){ // update rows only, keep the search box focused
@@ -210,6 +287,7 @@ async function pull(){if(!LIVE_URL)return;try{const d=await(await fetch(LIVE_URL
 setInterval(pull,5000);pull();
 renderTabs();render();renderTop();
 setInterval(()=>{tick();renderTop();if(!document.getElementById("modal").classList.contains("show")||true){if(document.activeElement.tagName!=="SELECT")render()}
+  const fl=document.getElementById("fl");if(fl&&TF.inst){fl.textContent=inr(ip(TF.inst));estF()}
   const tl=document.getElementById("tl");if(tl&&T.sym){tl.textContent=inr(px[T.sym].ltp);if(T.type==="MARKET")est()}},1000);
 </script>
 </body>
